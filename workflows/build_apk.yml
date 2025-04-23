@@ -1,0 +1,54 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]  # Runs on pushes to main branch
+  pull_request:         # Optional: Runs on PRs
+    branches: [ main ]
+  workflow_dispatch:    # Allows manual triggering
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build with Buildozer
+        uses: digreatbrian/buildozer-action@v1
+        id: buildozer
+        with:
+          workdir: .
+          buildozer_version: stable
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: package
+          path: ${{ steps.buildozer.outputs.filename }}
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ steps.buildozer.outputs.filename }}
+          tag_name: v0.1.${{ github.run_number }}
+          name: Arabic Educational Game v0.1.${{ github.run_number }}
+          body: |
+            Arabic Educational Game APK
+            
+            This is an automatically built APK for the Arabic Educational Game.
+            
+            ## Installation
+            1. Download the APK file
+            2. Enable installation from unknown sources in your Android settings
+            3. Install the APK
+            
+            ## Features
+            - Educational Arabic phrases across 5 levels
+            - Progress tracking
+            - Text input for summarizing ideas
+            - Data export to CSV or Excel
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
